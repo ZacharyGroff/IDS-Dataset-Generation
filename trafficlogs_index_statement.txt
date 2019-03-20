@@ -1,0 +1,55 @@
+PUT trafficlogs
+{
+  "mappings": {
+    "packets": {
+      "properties": {
+        "id": {
+          "type": "text"
+        },
+        "dst": {
+          "type": "ip"
+        },
+        "src": {
+          "type": "ip"
+        },
+        "dport": {
+          "type": "integer"
+        },
+        "sport": {
+          "type": "integer"
+        },
+        "length": {
+          "type": "integer"
+        },
+        "FYN": {
+          "type": "boolean"
+        },
+        "SYN": {
+          "type": "boolean"
+        },
+        "RST": {
+          "type": "boolean"
+        },
+        "PSH": {
+          "type": "boolean"
+        },
+        "ACK": {
+          "type": "boolean"
+        },
+        "URG": {
+          "type": "boolean"
+        },
+        "ECE": {
+          "type": "boolean"
+        },
+        "CWR": {
+          "type": "boolean"
+        },
+        "date": {
+          "type": "date",
+          "format": "yy/MM/dd HH:mm:ss"
+        }
+      }
+    }
+  }
+}
