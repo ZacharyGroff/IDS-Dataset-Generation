@@ -47,6 +47,87 @@ def getResults(scrollId, numHits, initialHits):
     
     return results
 
+def validIPs(packet1, packet2):
+    clientIP = packet1['src']
+    serverIP = packet1['dst']    
+    
+    if packet2['src'] != clientIP and packet2['src'] != serverIP:
+        return False
+    if packet2['dst'] != clientIP and packet2['dst'] != serverIP:
+        return False
+
+    return True
+
+def validPorts(packet1, packet2):
+    clientIP = packet1['src']
+    serverIP = packet1['dst']    
+ 
+    clientPort = packet1['sport']
+    serverPort = packet1['dport']
+
+    if packet2['src'] == clientIP and packet2['sport'] != clientPort:
+        return False
+    if packet2['src'] == serverIP and packet2['sport'] != serverPort:
+        return False
+
+    if packet2['dst'] == clientIP and packet2['dport'] != clientPort:
+        return False
+    if packet2['dst'] == serverIP and packet2['dport'] != serverPort:
+        return False
+
+    return True
+
+def isAdditionalConnection(packet1, packet2):
+    clientIP = packet1['src']
+    serverIP = packet1['dst']    
+ 
+    clientPort = packet1['sport']
+    serverPort = packet1['dport']
+
+    if packet2['src'] == clientIP and packet2['dst'] == serverIP:
+        if packet2['sport'] == clientPort and packet2['dport'] == serverPort:
+            if packet2['SYN']:
+                return True
+
+    return False
+
+def getRSTPackets(packets, packet1):
+    clientIP = packet1['src']
+    serverIP = packet1['dst']    
+ 
+    clientPort = packet1['sport']
+    serverPort = packet1['dport']
+
+    rstPackets = []
+    #check if server is sending RST packets to client
+    rstSeen = False
+    lastSeenRST = -1
+    for packet2 in packets:
+        #stop if another connection is attempted
+        if isAdditionalConnection(packet1, packet2):
+            break
+     
+        if packet2['src'] != serverIP or packet2['dst'] != clientIP:
+            continue
+        if packet2['sport'] != serverPort or packet2['dport'] != clientPort:
+            continue
+       
+        if not packet2['RST'] and rstSeen:
+            break
+        else:
+            rstPackets.append(packet2)
+            rstSeen = True
+            lastSeenRST = packets.index(packet2)
+
+    #also retrieve client->server packets causing additional RSTs
+    if lastSeenRST != -1:
+        for packet2 in packets[:lastSeenRST]:
+            if packet2['src'] == clientIP and packet2['dst'] == serverIP:
+                if packet2['sport'] == clientPort and packet2['dport'] == serverPort:
+                    rstPackets.append(packet2) 
+
+    return rstPackets
+
 def getFlows(packets):
     flows = []
     
@@ -56,38 +137,46 @@ def getFlows(packets):
         if packet1['ACK']:
             continue
         flow = [packet1]
-        
+ 
         clientIP = packet1['src']
-        serverIP = packet1['dst']
-        
+        serverIP = packet1['dst']    
+       
         srcFin = True if packet1['FIN'] else False
         dstFin = False
 
         seenConnection = False
         for packet2 in packets[packets.index(packet1):]:
+            #only care if server ends connection
             if srcFin and dstFin:
+                flow.extend(getRSTPackets(packets[packets.index(packet1):], packet1, packet2))
                 break
-           
-            if packet2['src'] != clientIP and packet2['src'] != serverIP:
+            
+            #break if client attempts to establish new connection with same IPs/Ports
+            if isAdditionalConnection(packet1, packet2):
+                break
+ 
+            if not validIPs(packet1, packet2):
                 continue
-            if packet2['dst'] != clientIP and packet2['dst'] != serverIP:
+            
+            if not validPorts(packet1, packet2):
                 continue
-          
+
             if packet2['SYN'] and packet2['ACK']:
                 seenConnection = True    
             if not seenConnection:
                 continue 
             
-            if packet2['FIN'] and packet2['src'] == clientIP:
-                srcFin = True
-
+            #if packet2 indicates a reset connection, find all additional RST packets
+            if packet2['RST'] and packet2['src'] == serverIP:
+                flow.extend(getRSTPackets(packets[packets.index(packet1):], packet1, packet2))
+                break
+            
             if packet2['FIN'] and packet2['src'] == serverIP:
                 dstFin = True
 
             flow.append(packet2)
 
-        if srcFin and dstFin:
-            flows.append(flow)
+        flows.append(flow)
 
     return flows
 
