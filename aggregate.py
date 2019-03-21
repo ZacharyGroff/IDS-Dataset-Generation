@@ -148,11 +148,11 @@ def getFlows(packets):
         for packet2 in packets[packets.index(packet1):]:
             #only care if server ends connection
             if srcFin and dstFin:
-                flow.extend(getRSTPackets(packets[packets.index(packet1):], packet1, packet2))
+                flow.extend(getRSTPackets(packets[packets.index(packet1):], packet1))
                 break
             
             #break if client attempts to establish new connection with same IPs/Ports
-            if isAdditionalConnection(packet1, packet2):
+            if seenConnection and isAdditionalConnection(packet1, packet2):
                 break
  
             if not validIPs(packet1, packet2):
@@ -168,7 +168,7 @@ def getFlows(packets):
             
             #if packet2 indicates a reset connection, find all additional RST packets
             if packet2['RST'] and packet2['src'] == serverIP:
-                flow.extend(getRSTPackets(packets[packets.index(packet1):], packet1, packet2))
+                flow.extend(getRSTPackets(packets[packets.index(packet1):], packet1))
                 break
             
             if packet2['FIN'] and packet2['src'] == serverIP:
