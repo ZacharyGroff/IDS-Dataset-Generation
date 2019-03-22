@@ -3,40 +3,7 @@ import json
 import time as t
 from datetime import datetime
 import requests
-
-class Packet():
-    def __init__(self, sport, dport, src, dst, length, flags, timestamp):
-        self.id = ':'.join(['->'.join([src, dst]), str(timestamp)])
-        self.src = src
-        self.sport = sport
-        self.dst = dst
-        self.dport = dport
-        self.length = length
-        self.time = self.fmtTime(timestamp)
-        self.FIN, self.SYN, self.RST, self.PSH, self.ACK, self.URG, self.ECE, self.CWR = self.mapFlags(flags)
-
-    def mapFlags(self, flags):
-        flagDict = {'F': False,
-                    'S': False,
-                    'R': False,
-                    'P': False,
-                    'A': False,
-                    'U': False,
-                    'E': False,
-                    'C': False}
-       
-        for flag in flags:
-            flagDict[flag] = True
-        
-        return flagDict.values()
-
-    def fmtTime(self, timestamp):
-        localTime = datetime.fromtimestamp(timestamp)
-        
-        return str(localTime)
-
-    def toJSON(self):
-        return json.dumps(self, default=lambda x: x.__dict__)
+from models.packet import Packet
 
 def readPcap(path):
     startTime = t.time()
@@ -47,14 +14,16 @@ def readPcap(path):
         if packet.haslayer(IP):
             if packet.haslayer(TCP):
                 layer = packet.getlayer(IP)
+                headerLength = layer.ihl
                 sport = layer.sport
                 dport = layer.dport
                 src = layer.src
                 dst = layer.dst
+                headerLength = layer.ihl * 4
                 length = layer.len
                 flags = list(packet.getlayer(TCP).flags)
                 time = packet.time
-                plist.append(Packet(sport, dport, src, dst, length, flags, time))
+                plist.append(Packet(sport, dport, src, dst, length, headerLength, flags, time))
             elif packet.haslayer(UDP):
                 pass
         #arp or weird local android udp packet (HOPOPT)

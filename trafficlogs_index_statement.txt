@@ -21,6 +21,9 @@ PUT trafficlogs
         "length": {
           "type": "integer"
         },
+	      "headerLength": {
+          "type": "integer"
+        },
         "FYN": {
           "type": "boolean"
         },

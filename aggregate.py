@@ -1,6 +1,7 @@
 import json
 import requests
 from datetime import datetime
+from models.flow import Flow
 
 def baseQuery():
     query = json.dumps( 
@@ -180,7 +181,32 @@ def getFlows(packets):
 
     return flows
 
+def aggregate(flows):
+    aggregatedFlows = []
+    for flow in flows:
+        assert(flow[0]['SYN'])
+        assert(not flow[0]['ACK'])
+        
+        timestamp = flow[0]['time']
+        clientIP = flow[0]['src']
+        serverIP = flow[0]['dst']
+        clientPort = flow[0]['sport']
+        serverPort = flow[0]['dport']
+
+        currentFlow = Flow(timestamp, clientIP, serverIP, clientPort, serverPort)
+        for packet in flow:
+            isLastPacket = True if packet == flow[-1] else False
+            currentFlow.increment(packet, isLastPacket)
+
+        aggregatedFlows.append(currentFlow)
+
+    return aggregatedFlows
+
 scrollId, numHits, initialHits = baseQuery()
 results = getResults(scrollId, numHits, initialHits)
 packets = [results[i]['_source'] for i in range(len(results))]
 packetFlows = getFlows(packets)
+flows = aggregate(packetFlows)
+for flow in flows:
+    print(flow.toJSON())
+    break
