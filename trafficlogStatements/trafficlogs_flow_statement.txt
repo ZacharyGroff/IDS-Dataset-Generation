@@ -1,4 +1,4 @@
-PUT trafficlogs
+PUT trafficflows
 {
   "mappings": {
     "flows": {

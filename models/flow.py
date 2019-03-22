@@ -3,7 +3,6 @@ from datetime import datetime
 
 class Flow(): 
     def __init__(self, timestamp, clientIP, serverIP, clientPort, serverPort):
-         
         self.timestamp = timestamp
         self.clientIP = clientIP
         self.serverIP = serverIP
@@ -22,9 +21,9 @@ class Flow():
         self.fwdPackets = 0
         self.bwdPackets = 0
 
-        self.fwdPacketMin = 0
+        self.fwdPacketMin = float("inf")
         self.fwdPacketMax = 0
-        self.bwdPacketMin = 0
+        self.bwdPacketMin = float("inf")
         self.bwdPacketMax = 0
 
         self.fwdFIN = 0

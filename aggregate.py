@@ -206,7 +206,7 @@ def postFlows(flows):
     headers = {'Content-type': 'application/json'}
     responses = {}
     for flow in flows:
-        url = "http://localhost:9200/trafficlogs/flows/{}".format(flow.id)
+        url = "http://localhost:9200/trafficflows/flows/{}".format(flow.id)
         response = requests.post(url, flow.toJSON(), headers=headers).status_code
         if response not in responses:
             responses[response] = 1
