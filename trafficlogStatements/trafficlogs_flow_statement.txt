@@ -1,0 +1,115 @@
+PUT trafficlogs
+{
+  "mappings": {
+    "flows": {
+      "properties": {
+        "id": {
+          "type": "text"
+        },
+        "clientIP": {
+          "type": "ip"
+        },
+        "serverIP": {
+          "type": "ip"
+        },
+        "clientPort": {
+          "type": "integer"
+        },
+        "serverPort": {
+          "type": "integer"
+        },
+        "duration": {
+          "type": "integer"
+        },
+        "initFwdLength": {
+          "type": "integer"
+        },
+        "initBwdLength": {
+          "type": "integer"
+        },
+	"fwdHeaderLength": {
+          "type": "integer"
+        },
+        "bwdHeaderLength": {
+          "type": "integer"
+        },
+	      "fwdBytes": {
+          "type": "integer"
+        },
+	      "bwdBytes": {
+          "type": "integer"
+        },
+        "fwdPackets": {
+          "type": "integer"
+        },
+        "bwdPackets": {
+          "type": "integer"
+        },
+        "fwdPacketMin": {
+          "type": "integer"
+        },
+        "bwdPacketMin": {
+          "type": "integer"
+        },
+        "fwdPacketMax": {
+          "type": "integer"
+        },
+        "bwdPacketMax": {
+          "type": "integer"
+        },
+        "fwdFIN": {
+          "type": "integer"
+        },
+        "fwdSYN": {
+          "type": "integer"
+        },
+        "fwdRST": {
+          "type": "integer"
+        },
+        "fwdPSH": {
+          "type": "integer"
+        },
+        "fwdACK": {
+          "type": "integer"
+        },
+        "fwdURG": {
+          "type": "integer"
+        },
+        "fwdECE": {
+          "type": "integer"
+        },
+        "fwdCWR": {
+          "type": "integer"
+        },
+        "bwdFIN": {
+          "type": "integer"
+        },
+        "bwdSYN": {
+          "type": "integer"
+        },
+        "bwdRST": {
+          "type": "integer"
+        },
+        "bwdPSH": {
+          "type": "integer"
+        },
+        "bwdACK": {
+          "type": "integer"
+        },
+        "bwdURG": {
+          "type": "integer"
+        },
+        "bwdECE": {
+          "type": "integer"
+        },
+        "bwdCWR": {
+          "type": "integer"
+        },
+        "timestamp": {
+          "type": "date",
+          "format": "yyyy-MM-dd HH:mm:ss.SSSSSS"
+        }
+      }
+    }
+  }
+}
