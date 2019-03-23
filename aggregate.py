@@ -115,6 +115,7 @@ def getRSTPackets(packets, packet1):
        
         if not packet2['RST'] and rstSeen:
             break
+        
         else:
             rstPackets.append(packet2)
             rstSeen = True
@@ -166,11 +167,6 @@ def getFlows(packets):
                 seenConnection = True    
             if not seenConnection:
                 continue 
-            
-            #if packet2 indicates a reset connection, find all additional RST packets
-            if packet2['RST'] and packet2['src'] == serverIP:
-                flow.extend(getRSTPackets(packets[packets.index(packet1):], packet1))
-                break
             
             if packet2['FIN'] and packet2['src'] == serverIP:
                 dstFin = True
