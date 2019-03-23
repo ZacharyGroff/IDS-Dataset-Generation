@@ -1,4 +1,5 @@
 from scapy.all import *
+from scapy_http.http import HTTPRequest
 import json
 import time as t
 from datetime import datetime
@@ -14,7 +15,6 @@ def readPcap(path):
         if packet.haslayer(IP):
             if packet.haslayer(TCP):
                 layer = packet.getlayer(IP)
-                headerLength = layer.ihl
                 sport = layer.sport
                 dport = layer.dport
                 src = layer.src
@@ -23,7 +23,19 @@ def readPcap(path):
                 length = layer.len
                 flags = list(packet.getlayer(TCP).flags)
                 time = packet.time
-                plist.append(Packet(sport, dport, src, dst, length, headerLength, flags, time))
+                label = 'BENIGN'
+                
+                if packet.haslayer(HTTPRequest): 
+                    headers = packet.getlayer(HTTPRequest).Headers.decode('utf-8')
+                    if headers.find('Mozzila/5.0'):
+                        label = 'Hulk'
+                    elif headers.find('Mozzila/4.0'):
+                        label = 'GoldenEye'
+                    elif headers.find('Mozilla/3.0'):
+                        label = 'SlowLoris'
+
+                plist.append(Packet(sport, dport, src, dst, length, headerLength, flags, time, label))
+            
             elif packet.haslayer(UDP):
                 pass
         #arp or weird local android udp packet (HOPOPT)

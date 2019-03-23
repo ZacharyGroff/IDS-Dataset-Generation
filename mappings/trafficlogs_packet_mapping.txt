@@ -6,6 +6,9 @@ PUT trafficlogs
         "id": {
           "type": "text"
         },
+        "label": {
+          "type": "text"
+        },	
         "dst": {
           "type": "ip"
         },
@@ -48,9 +51,9 @@ PUT trafficlogs
         "CWR": {
           "type": "boolean"
         },
-        "date": {
+        "time": {
           "type": "date",
-          "format": "yy/MM/dd HH:mm:ss"
+          "format": "yyyy-MM-dd HH:mm:ss.SSSSSS"
         }
       }
     }

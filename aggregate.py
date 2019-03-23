@@ -23,7 +23,7 @@ def baseQuery():
 
     response = requests.get(url, data=query, headers=headers)
     data = json.loads(response.text)
-
+    
     scrollId = data['_scroll_id']
     numHits = data['hits']['total'] - 10
     initialHits = data['hits']['hits']

@@ -1,7 +1,8 @@
 from datetime import datetime
+import json
 
 class Packet():
-    def __init__(self, sport, dport, src, dst, length, headerLength, flags, timestamp):
+    def __init__(self, sport, dport, src, dst, length, headerLength, flags, timestamp, label):
         self.id = ':'.join(['->'.join([src, dst]), str(timestamp)])
         self.src = src
         self.sport = sport
@@ -11,6 +12,7 @@ class Packet():
         self.headerLength = headerLength
         self.time = self.fmtTime(timestamp)
         self.FIN, self.SYN, self.RST, self.PSH, self.ACK, self.URG, self.ECE, self.CWR = self.mapFlags(flags)
+        self.label = label
 
     def mapFlags(self, flags):
         flagDict = {'F': False,

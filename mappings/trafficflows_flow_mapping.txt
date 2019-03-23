@@ -6,6 +6,9 @@ PUT trafficflows
         "id": {
           "type": "text"
         },
+        "label": {
+          "type": "text"
+        },
         "clientIP": {
           "type": "ip"
         },

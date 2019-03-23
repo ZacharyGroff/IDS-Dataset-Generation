@@ -44,6 +44,8 @@ class Flow():
         self.bwdECE = 0
         self.bwdCWR = 0
 
+        self.label = 'BENIGN'
+
     def getID(self):
         client = ':'.join([self.clientIP, str(self.clientPort)])
         server = ':'.join([self.serverIP, str(self.serverPort)])
@@ -61,9 +63,19 @@ class Flow():
         if self.isServer(packet['src']):
             self.incrementServer(packet)
 
+    def updateLabel(self, packet):
+        if self.label == 'BENIGN' and packet['label'] != 'BENIGN':
+            self.label = packet['label']
+        
+        #ensure no flow has packets with differing non-benign labels
+        if self.label != 'BENIGN' and self.label != packet['label']:
+            assert(packet['label'] == 'BENIGN')
+
     def incrementClient(self, packet):
         if not self.seenClientPacket():
             self.initFwdLength = packet['length']
+       
+        self.updateLabel(packet)
         
         self.fwdPackets += 1
         self.fwdHeaderLength += packet['headerLength']
@@ -87,7 +99,9 @@ class Flow():
     def incrementServer(self, packet):
         if not self.seenServerPacket():
             self.initBwdLength = packet['length']
-        
+       
+        self.updateLabel(packet)
+
         self.bwdPackets += 1
         self.bwdHeaderLength += packet['headerLength']
         self.bwdBytes += packet['length']
