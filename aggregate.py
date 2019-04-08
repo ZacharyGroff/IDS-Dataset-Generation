@@ -229,7 +229,7 @@ def postFlows():
 def writeFlows(dataFile):
     with open(dataFile, 'w') as f:
         for flow in aggregatedFlows:
-            json.dump(flow, f)
+            f.write(flow.toJSON())
             f.write('\n')
 
 def getPackets():
