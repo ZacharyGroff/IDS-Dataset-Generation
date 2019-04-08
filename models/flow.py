@@ -69,7 +69,7 @@ class Flow():
         
         #ensure no flow has packets with differing non-benign labels
         if self.label != 'BENIGN' and self.label != packet['label']:
-            assert(packet['label'] == 'BENIGN')
+            logging.debug('Differing non-benign labels discovered in packet {}'.format(packet.__dict__))
 
     def incrementClient(self, packet):
         if not self.seenClientPacket():
