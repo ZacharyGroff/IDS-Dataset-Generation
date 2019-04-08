@@ -226,6 +226,12 @@ def postFlows():
     print('Reponses:')
     [print('{}: {}'.format(k,v)) for k,v in responses.items()]
 
+def writeFlows(dataFile):
+    with open(dataFile, 'w') as f:
+        for flow in aggregatedFlows:
+            json.dump(flow, f)
+            f.write('\n')
+
 def getPackets():
     scrollId, numHits, initialHits = baseQuery()
     print('Gathering Packets...')
@@ -261,4 +267,5 @@ if __name__ == '__main__':
     q = Queue()
     aggregatedFlows = []
     aggregateBuilder()
-    postFlows()
+    #postFlows()
+    writeFlows('flows.txt')
