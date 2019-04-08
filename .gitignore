@@ -1,3 +1,4 @@
 pcaps/
 __pycache__/
 attack/
+aggregate.log
