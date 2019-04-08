@@ -234,6 +234,14 @@ def getPackets():
 
     return [results[i]['_source'] for i in range(len(results))]
 
+def importPackets(dataFile):
+    data = []
+    with open(dataFile, 'r') as f:
+        for packet in f.readlines():
+            data.append(json.loads(packet))
+    
+    return data
+
 if __name__ == '__main__':
     global q
     global threads
@@ -243,7 +251,8 @@ if __name__ == '__main__':
     
     threads = 4
     logging.basicConfig(filename='aggregate.log', level=logging.DEBUG)
-    packets = getPackets()
+    #packets = getPackets()
+    packets = importPackets('data.txt')
     print('Gathering Flows...')
     q = Queue()
     flows = []
