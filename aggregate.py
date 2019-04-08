@@ -15,7 +15,7 @@ def baseQuery():
             "range" : {
                 "time" : {
                     "gte": "18/01/01",
-                    "lte": "19/03/24",
+                    "lte": "20/01/01",
                     "format": "yy/MM/dd"
                 }
             }
