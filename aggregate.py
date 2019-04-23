@@ -1,11 +1,12 @@
+import sys
+import os
 import json
 import requests
 import logging
-import threading
+import multiprocessing
 import math
 from datetime import datetime
 from models.flow import Flow
-from queue import Queue
 
 def baseQuery():
     query = json.dumps( 
@@ -104,7 +105,9 @@ def isTimeout(time1, time2):
         return True
     return False 
 
-def flowWorker(start, end):
+def flowWorker(data):
+    start, end, packets = data
+    flows = []
     for packet1 in packets[start:end]:
         if not packet1['SYN']:
             continue
@@ -125,7 +128,11 @@ def flowWorker(start, end):
             if seenConnection and isAdditionalConnection(packet1, packet2):
                 break
  
-            packetTime = datetime.strptime(packet2['time'], '%Y-%m-%d %H:%M:%S.%f')
+            try:
+                packetTime = datetime.strptime(packet2['time'], '%Y-%m-%d %H:%M:%S.%f')
+            except(ValueError):
+                packetTime = datetime.strptime(packet2['time'], '%Y-%m-%d %H:%M:%S')
+ 
             if isTimeout(lastPacketTime, packetTime):
                 break
 
@@ -143,74 +150,51 @@ def flowWorker(start, end):
             flow.append(packet2)
 
         flows.append(flow)
-        print('Flows discovered: {}'.format(len(flows)))
-        print('Active threads: {}'.format(threading.active_count()))
-        print('Current thread: {}'.format(threading.current_thread()))
-        print('Current packet: {} of {}'.format(packet1Index, end))
+        if len(flows) % 100 == 0:
+            print('Process: {}\tFlows Gathered: {}'.format(os.getpid(), len(flows)))
 
-def flowRunner():
-    while True:
-        start, end = q.get()
-        flowWorker(start, end)
-        q.task_done()
+    return flows
 
-def flowBuilder():
-    for i in range(threads):
-        t = threading.Thread(target=flowRunner)
-        t.daemon = True
-        t.start()
-
+def flowBuilder(packets, threads):
+    p = multiprocessing.Pool(threads)
+    target = []
+ 
     _range = math.ceil(len(packets) / threads)
     for i in range(threads):
         start = _range * i
         end = start + _range
         if end > len(packets):
             end = len(packets)
-        q.put((start, end))
+        target.append((start, end, packets)) 
     
-    q.join()
+    flowLists = p.map(flowWorker, target)
+    
+    flows = []
+    for flowList in flowLists:
+        for flow in flowList:
+            flows.append(flow)
+
+    return flows
 
 def aggregateWorker(flow):
-        try:
-            assert(flow[0]['SYN'])
-            assert(not flow[0]['ACK'])
-        except:
-            logging.debug('A problem has occured with this flow:\n{}'.format(flow[0].__dict__))
-            return
+    timestamp = flow[0]['time']
+    clientIP = flow[0]['src']
+    serverIP = flow[0]['dst']
+    clientPort = flow[0]['sport']
+    serverPort = flow[0]['dport']
 
-        timestamp = flow[0]['time']
-        clientIP = flow[0]['src']
-        serverIP = flow[0]['dst']
-        clientPort = flow[0]['sport']
-        serverPort = flow[0]['dport']
+    currentFlow = Flow(timestamp, clientIP, serverIP, clientPort, serverPort)
+    for packet in flow:
+        isLastPacket = True if packet == flow[-1] else False
+        currentFlow.increment(packet, isLastPacket)
 
-        currentFlow = Flow(timestamp, clientIP, serverIP, clientPort, serverPort)
-        for packet in flow:
-            isLastPacket = True if packet == flow[-1] else False
-            currentFlow.increment(packet, isLastPacket)
+    return currentFlow
 
-        aggregatedFlows.append(currentFlow)
-        print('Flows Aggregated: {}'.format(flows.index(flow)))
-        print('Active threads: {}'.format(threading.active_count()))
-        print('Current thread: {}'.format(threading.current_thread()))
+def aggregateBuilder(flows):
+    p = multiprocessing.Pool()
+    aggregatedFlows = p.map(aggregateWorker, flows)
 
-
-def aggregateRunner():
-    while True:
-        flow = q.get()
-        aggregateWorker(flow)
-        q.task_done()
-
-def aggregateBuilder():
-    for i in range(threads):
-        t = threading.Thread(target=aggregateRunner)
-        t.daemon = True
-        t.start()
-
-    for flow in flows:
-        q.put(flow)
-
-    q.join()
+    return aggregatedFlows
 
 def postFlows():
     headers = {'Content-type': 'application/json'}
@@ -226,10 +210,18 @@ def postFlows():
     print('Reponses:')
     [print('{}: {}'.format(k,v)) for k,v in responses.items()]
 
-def writeFlows(dataFile):
+def writeFlowsJSON(dataFile, aggregatedFlows):
     with open(dataFile, 'w') as f:
         for flow in aggregatedFlows:
             f.write(flow.toJSON())
+            f.write('\n')
+
+def writeFlowsCSV(dataFile, aggregatedFlows):
+    with open(dataFile, 'w') as f:
+        f.write(aggregatedFlows[0].toHeader())
+        f.write('\n')
+        for flow in aggregatedFlows:
+            f.write(flow.toCSV())
             f.write('\n')
 
 def getPackets():
@@ -240,7 +232,7 @@ def getPackets():
 
     return [results[i]['_source'] for i in range(len(results))]
 
-def importPackets(dataFile):
+def importPacketsJSON(dataFile):
     data = []
     with open(dataFile, 'r') as f:
         for packet in f.readlines():
@@ -249,23 +241,14 @@ def importPackets(dataFile):
     return data
 
 if __name__ == '__main__':
-    global q
-    global threads
-    global packets
-    global flows
-    global aggregatedFlows
-    
     threads = 4
+
     logging.basicConfig(filename='aggregate.log', level=logging.DEBUG)
     #packets = getPackets()
-    packets = importPackets('data.txt')
+    packets = importPacketsJSON(sys.argv[1])
     print('Gathering Flows...')
-    q = Queue()
-    flows = []
-    flowBuilder()
+    flows = flowBuilder(packets, threads)
     print('Aggregating Flows...')
-    q = Queue()
-    aggregatedFlows = []
-    aggregateBuilder()
+    aggregatedFlows = aggregateBuilder(flows)
     #postFlows()
-    writeFlows('flows.txt')
+    writeFlowsCSV(sys.argv[2], aggregatedFlows)

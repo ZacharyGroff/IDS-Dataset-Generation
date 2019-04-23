@@ -2,3 +2,5 @@ pcaps/
 __pycache__/
 attack/
 aggregate.log
+CSVs/
+JSON/

@@ -37,6 +37,14 @@ class Packet():
     def toJSON(self):
         return json.dumps(self, default=lambda x: x.__dict__)
 
+    def toCSV(self):
+        values = [str(value) for attr, value in self.__dict__.items()]
+        return ','.join(values)
+
+    def toHeader(self):
+        values = [attr for attr, value in self.__dict__.items()]
+        return ','.join(values)
+
     def isClient(self, clientIP):
         return self.src == clientIP
 
