@@ -1,6 +1,7 @@
 from scapy.all import *
 from scapy_http.http import HTTPRequest
 import json
+import sys
 import time as _time
 from datetime import datetime
 import requests
@@ -17,7 +18,7 @@ def send(packet):
     else:
         responses[response] += 1
 
-def work():
+def worker():
     while True:
         packet = q.get()
         send(packet)
@@ -27,7 +28,7 @@ def readPcap(path):
     startTime = _time.time()
     
     packets = rdpcap(path)
-    plist = []
+    packetList = []
     print('Read {} packets from pcap'.format(len(packets)))
     for packet in packets:
         if packet.haslayer(IP):
@@ -57,7 +58,7 @@ def readPcap(path):
                     elif headers.find('Mozilla/23.0') != -1:
                         label = 'SlowLoris'
 
-                plist.append(Packet(sport, dport, src, dst, length, headerLength, flags, time, label))
+                packetList.append(Packet(sport, dport, src, dst, length, headerLength, flags, time, label))
             
             elif packet.haslayer(UDP):
                 pass
@@ -67,7 +68,9 @@ def readPcap(path):
             #if packet.haslayer(UDP):
             #    packet.show()
             #    print()
+    return packetList
 
+def sendPcap(packetList):
     global q
     global responses
 
@@ -79,7 +82,7 @@ def readPcap(path):
         t.daemon = True
         t.start()
 
-    for packet in plist:
+    for packet in packetList:
         q.put(packet)
  
     q.join()
@@ -89,6 +92,24 @@ def readPcap(path):
     
     print('Finished reading pcap in {} seconds.'.format(int(_time.time() - startTime)))
 
+def writePcapJSON(packetList):
+    with open(sys.argv[2], 'w') as f:
+        for packet in packetList:
+            f.write(packet.toJSON())
+            f.write('\n')
+    print('Wrote {} packets to {}.'.format(len(packetList), sys.argv[2]))
+
+
+def writePcapCSV(packetList):
+    with open(sys.argv[2], 'w') as f:
+        f.write(packetList[0].toHeader())
+        f.write('\n')
+        for packet in packetList:
+            f.write(packet.toCSV())
+            f.write('\n')
+    print('Wrote {} packets to {}.'.format(len(packetList), sys.argv[2]))
+
 if __name__ == '__main__':
-    print('Enter filepath to pcap:')
-    readPcap(input())
+    packetList = readPcap(sys.argv[1])
+    #sendPcap(packetList)
+    writePcapJSON(packetList)

@@ -2,54 +2,102 @@ import json
 from datetime import datetime
 
 class Flow(): 
-    def __init__(self, timestamp, clientIP, serverIP, clientPort, serverPort):
+    def __init__(self, timestamp=None, clientIP=None, serverIP=None, clientPort=None, serverPort=None, duration=None, _id=None, initFwdLength=-1, initBwdLength=-1, fwdHeaderLength=0, bwdHeaderLength=0, fwdBytes=0, bwdBytes=0, fwdPackets=0, bwdPackets=0, fwdPacketMin=float("inf"), fwdPacketMax=0, bwdPacketMin=float("inf"), bwdPacketMax=0, fwdFIN=0, fwdSYN=0, fwdRST=0, fwdPSH=0, fwdACK=0, fwdURG=0, fwdECE=0, fwdCWR=0, bwdFIN=0, bwdSYN=0, bwdRST=0, bwdPSH=0, bwdACK=0, bwdURG=0, bwdECE=0, bwdCWR=0, label='BENIGN'):
         self.timestamp = timestamp
         self.clientIP = clientIP
         self.serverIP = serverIP
         self.clientPort = clientPort
         self.serverPort = serverPort
-        self.duration = None
-        self.id = self.getID()
+        self.duration = duration
+        self.id = self.getID() if not _id else _id
 
-        self.initFwdLength = -1
-        self.initBwdLength = -1
+        self.initFwdLength = initFwdLength
+        self.initBwdLength = initBwdLength
 
-        self.fwdHeaderLength = 0
-        self.bwdHeaderLength = 0
-        self.fwdBytes = 0
-        self.bwdBytes = 0
-        self.fwdPackets = 0
-        self.bwdPackets = 0
+        self.fwdHeaderLength = fwdHeaderLength
+        self.bwdHeaderLength = bwdHeaderLength
+        self.fwdBytes = fwdBytes
+        self.bwdBytes = bwdBytes
+        self.fwdPackets = fwdPackets
+        self.bwdPackets = bwdPackets
 
-        self.fwdPacketMin = float("inf")
-        self.fwdPacketMax = 0
-        self.bwdPacketMin = float("inf")
-        self.bwdPacketMax = 0
+        self.fwdPacketMin = fwdPacketMin
+        self.fwdPacketMax = fwdPacketMax
+        self.bwdPacketMin = bwdPacketMin
+        self.bwdPacketMax = bwdPacketMax
 
-        self.fwdFIN = 0
-        self.fwdSYN = 0
-        self.fwdRST = 0
-        self.fwdPSH = 0
-        self.fwdACK = 0
-        self.fwdURG = 0
-        self.fwdECE = 0
-        self.fwdCWR = 0
+        self.fwdFIN = fwdFIN
+        self.fwdSYN = fwdSYN
+        self.fwdRST = fwdRST
+        self.fwdPSH = fwdPSH
+        self.fwdACK = fwdACK
+        self.fwdURG = fwdURG
+        self.fwdECE = fwdECE
+        self.fwdCWR = fwdCWR
         
-        self.bwdFIN = 0
-        self.bwdSYN = 0
-        self.bwdRST = 0
-        self.bwdPSH = 0
-        self.bwdACK = 0
-        self.bwdURG = 0
-        self.bwdECE = 0
-        self.bwdCWR = 0
+        self.bwdFIN = bwdFIN
+        self.bwdSYN = bwdSYN
+        self.bwdRST = bwdRST
+        self.bwdPSH = bwdPSH
+        self.bwdACK = bwdACK
+        self.bwdURG = bwdURG
+        self.bwdECE = bwdECE
+        self.bwdCWR = bwdCWR
 
-        self.label = 'BENIGN'
+        self.label = label
+
+    def load(self, flowDict):
+        self.timestamp = flowDict['timestamp']
+        self.clientIP = flowDict['clientIP']
+        self.serverIP = flowDict['serverIP']
+        self.clientPort = flowDict['clientPort']
+        self.serverPort = flowDict['serverPort']
+        self.duration = flowDict['duration']
+        self.id = flowDict['id']
+
+        self.initFwdLength = flowDict['initFwdLength']
+        self.initBwdLength = flowDict['initBwdLength']
+
+        self.fwdHeaderLength = flowDict['fwdHeaderLength']
+        self.bwdHeaderLength = flowDict['bwdHeaderLength']
+        self.fwdBytes = flowDict['fwdBytes']
+        self.bwdBytes = flowDict['bwdBytes']
+        self.fwdPackets = flowDict['fwdPackets']
+        self.bwdPackets = flowDict['bwdPackets']
+
+        self.fwdPacketMin = flowDict['fwdPacketMin']
+        self.fwdPacketMax = flowDict['fwdPacketMax']
+        self.bwdPacketMin = flowDict['bwdPacketMin']
+        self.bwdPacketMax = flowDict['bwdPacketMax']
+
+        self.fwdFIN = flowDict['fwdFIN']
+        self.fwdSYN = flowDict['fwdSYN']
+        self.fwdRST = flowDict['fwdRST']
+        self.fwdPSH = flowDict['fwdPSH']
+        self.fwdACK = flowDict['fwdACK']
+        self.fwdURG = flowDict['fwdURG']
+        self.fwdECE = flowDict['fwdECE']
+        self.fwdCWR = flowDict['fwdCWR']
+        
+        self.bwdFIN = flowDict['bwdFIN']
+        self.bwdSYN = flowDict['bwdSYN']
+        self.bwdRST = flowDict['bwdRST']
+        self.bwdPSH = flowDict['bwdPSH']
+        self.bwdACK = flowDict['bwdACK']
+        self.bwdURG = flowDict['bwdURG']
+        self.bwdECE = flowDict['bwdECE']
+        self.bwdCWR = flowDict['bwdCWR']
+
+        self.label = flowDict['label']
+
 
     def getID(self):
-        client = ':'.join([self.clientIP, str(self.clientPort)])
-        server = ':'.join([self.serverIP, str(self.serverPort)])
-        return '@'.join(['->'.join([client, server]), str(self.timestamp)])
+        try:
+            client = ':'.join([self.clientIP, str(self.clientPort)])
+            server = ':'.join([self.serverIP, str(self.serverPort)])
+            return '@'.join(['->'.join([client, server]), str(self.timestamp)])
+        except(TypeError):
+            return None
 
     def increment(self, packet, isLastPacket=False):
         if isLastPacket:
@@ -69,7 +117,8 @@ class Flow():
         
         #ensure no flow has packets with differing non-benign labels
         if self.label != 'BENIGN' and self.label != packet['label']:
-            logging.debug('Differing non-benign labels discovered in packet {}'.format(packet.__dict__))
+            #logging.debug('Differing non-benign labels discovered in packet {}'.format(packet.__dict__))
+            pass
 
     def incrementClient(self, packet):
         if not self.seenClientPacket():
@@ -132,6 +181,14 @@ class Flow():
 
     def seenServerPacket(self):
         return self.bwdPackets > 0
+
+    def toCSV(self):
+        values = [str(value) for attr, value in self.__dict__.items()]
+        return ','.join(values)
+
+    def toHeader(self):
+        values = [attr for attr, value in self.__dict__.items()]
+        return ','.join(values)
 
     def toJSON(self):
         return json.dumps(self, default=lambda x: x.__dict__)
